@@ -7,10 +7,12 @@ from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
 from PIL import Image
 import io
+import itertools
+
 
 app = FastAPI()
 
-model = load_model('./human_detector.keras')
+model = load_model('human_detector.keras')
 class_names = ['animal', 'other', 'person']
 
 @app.post("/predict")
@@ -23,88 +25,154 @@ async def predict(file: UploadFile = File(...)):
     x = x / 255.0
     predictions = model.predict(x)
     predicted_class = class_names[np.argmax(predictions)]
-    return {"class": predicted_class}
+    hasil=False
+    if(predicted_class=="person"):
+        hasil=True
+    return hasil
 
-@app.post('/predict_kwh')
-def predict_kwh(daya_listrik, jenis_alat, kulkas_num, kulkas_consume_hour, kulkas_power, ac_num, ac_consume_hour, ac_power, lamp_type, lamp_num, lamp_consume_hour, lamp_power):
-    power = (kulkas_num * kulkas_consume_hour * kulkas_power) + (ac_num * ac_consume_hour * ac_power) + (lamp_num * lamp_consume_hour * lamp_power)
-    return (power*30) / 1000
+@app.post('/predict_combined')
+def predict_kwh(daya, key):
+    ac_inverter_arr = []
+    ac_non_inverter_arr = []
+    kulkas_inverter_arr = []
+    kulkas_non_inverter_arr = []
+    lampu_pijar_arr = []
+    lampu_led_arr = []
+    televisi_arr = []
+    kipas_angin_arr = []
 
-@app.post('/predict_price')
-def predict_price(daya_listrik, jenis_alat, kulkas_inverter, kulkas_num, kulkas_consume_hour, kulkas_power, ac_inverter, ac_num, ac_consume_hour, ac_power, lamp_type, lamp_num, lamp_consume_hour, lamp_power):
-    power_kwh = predict_kwh(daya_listrik, jenis_alat, kulkas_inverter, kulkas_num, kulkas_consume_hour, kulkas_power, ac_inverter, ac_num, ac_consume_hour, ac_power, lamp_type, lamp_num, lamp_consume_hour, lamp_power)
+    for i in key:
+        if isinstance(i, str):
+            if "ac inverter" in i:
+                ac_inverter_arr.append(i)
+            elif "ac non inverter" in i:
+                ac_non_inverter_arr.append(i)
+            elif "kulkas inverter" in i:
+                kulkas_inverter_arr.append(i)
+            elif "kulkas non inverter" in i:
+                kulkas_non_inverter_arr.append(i)
+            elif "lampu pijar" in i:
+                lampu_pijar_arr.append(i)
+            elif "lampu led" in i:
+                lampu_led_arr.append(i)
+            elif "televisi" in i:
+                televisi_arr.append(i)
+            elif "kipas angin" in i:
+                kipas_angin_arr.append(i)
 
-    if (daya_listrik == 450):
+    ac_inverter_data = [list(group) for _, group in itertools.groupby(key, lambda x: x in ac_inverter_arr) if group]
+    ac_non_inverter_data = [list(group) for _, group in itertools.groupby(key, lambda x: x in ac_non_inverter_arr) if group]
+    kulkas_inverter_data = [list(group) for _, group in itertools.groupby(key, lambda x: x in kulkas_inverter_arr) if group]
+    kulkas_non_inverter_data = [list(group) for _, group in itertools.groupby(key, lambda x: x in kulkas_non_inverter_arr) if group]
+    lampu_pijar_data = [list(group) for _, group in itertools.groupby(key, lambda x: x in lampu_pijar_arr) if group]
+    lampu_led_data = [list(group) for _, group in itertools.groupby(key, lambda x: x in lampu_led_arr) if group]
+    televisi_data = [list(group) for _, group in itertools.groupby(key, lambda x: x in televisi_arr) if group]
+    kipas_angin_data = [list(group) for _, group in itertools.groupby(key, lambda x: x in kipas_angin_arr) if group]
+
+    ac_inverter_num = ac_inverter_power = ac_inverter_consume_hour = 0
+    ac_non_inverter_num = ac_non_inverter_power = ac_non_inverter_consume_hour = 0
+    kulkas_inverter_num = kulkas_inverter_power = kulkas_inverter_consume_hour = 0
+    kulkas_non_inverter_num = kulkas_non_inverter_power = kulkas_non_inverter_consume_hour = 0
+    lampu_pijar_num = lampu_pijar_power = lampu_pijar_consume_hour = 0
+    lampu_led_num = lampu_led_power = lampu_led_consume_hour = 0
+    televisi_num = televisi_power = televisi_consume_hour = 0
+    kipas_angin_num = kipas_angin_power = kipas_angin_consume_hour = 0
+
+    for data in ac_inverter_data:
+        ac_inverter_num, ac_inverter_power, ac_inverter_consume_hour = data[1:4]
+
+    for data in ac_non_inverter_data:
+        ac_non_inverter_num, ac_non_inverter_power, ac_non_inverter_consume_hour = data[1:4]
+
+    for data in kulkas_inverter_data:
+        kulkas_inverter_num, kulkas_inverter_power, kulkas_inverter_consume_hour = data[1:4]
+
+    for data in kulkas_non_inverter_data:
+        kulkas_non_inverter_num, kulkas_non_inverter_power, kulkas_non_inverter_consume_hour = data[1:4]
+
+    for data in lampu_pijar_data:
+        lampu_pijar_num, lampu_pijar_power, lampu_pijar_consume_hour = data[1:4]
+
+    for data in lampu_led_data:
+        lampu_led_num, lampu_led_power, lampu_led_consume_hour = data[1:4]
+
+    for data in televisi_data:
+        televisi_num, televisi_power, televisi_consume_hour = data[1:4]
+
+    for data in kipas_angin_data:
+        kipas_angin_num, kipas_angin_power, kipas_angin_consume_hour = data[1:4]
+
+    power = (kulkas_inverter_num * kulkas_inverter_consume_hour * kulkas_inverter_power) + (ac_inverter_num * ac_inverter_consume_hour * ac_inverter_power) + (lampu_pijar_num * lampu_pijar_consume_hour * lampu_pijar_power) +(lampu_led_num * lampu_led_consume_hour * lampu_led_power)+ (televisi_num * televisi_consume_hour * televisi_power) + (kipas_angin_num * kipas_angin_consume_hour * kipas_angin_power)
+    total_kwh = (power * 30) / 1000
+    
+    power_kwh = total_kwh
+
+    if (daya == 450):
         power_kwh *= 415
-    elif (daya_listrik == 900):
+    elif (daya == 900):
         power_kwh *= 1352
-    elif (daya_listrik == 1300):
+    elif (daya == 1300):
         power_kwh *= 1444
-    elif (daya_listrik == 2200):
+    elif (daya == 2200):
         power_kwh *= 1444
     else:
         power_kwh *= 1699
-    return power_kwh
+    price = power_kwh
 
-@app.post('/predict_co2')
-def predict_co2(daya_listrik, jenis_alat, kulkas_num, kulkas_consume_hour, kulkas_power, ac_num, ac_consume_hour, ac_power, lamp_type, lamp_num, lamp_consume_hour, lamp_power):
-    electric_carbon = predict_kwh(daya_listrik, jenis_alat, kulkas_num, kulkas_consume_hour, kulkas_power, ac_inverter, ac_num, ac_consume_hour, ac_power, lamp_type, lamp_num, lamp_consume_hour, lamp_power) * 0.0094
+    electric_carbon = total_kwh * 0.0094
 
-    carbon_ac_non_inverter= 0.10396
-    carbon_kulkas_inverter= 0.06500
-    carbon_kulkas_non_inverter= 0.06600
+    kulkas_inverter_carbon = (kulkas_inverter_num / 24) * kulkas_inverter_consume_hour
+    ac_inverter_carbon = ac_inverter_num * ac_inverter_consume_hour
+    lampu_pijar_carbon = lampu_pijar_consume_hour * lampu_pijar_num
 
-    kulkas_carbon = (kulkas_num / 24) * kulkas_consume_hour
-    ac_carbon = ac_num * ac_consume_hour
-    if(jenis_alat=="kulkas inverter"):
-        kulkas_carbon *= carbon_kulkas_inverter
-    elif(jenis_alat=="kulkas non inverter"):
-        kulkas_carbon *= carbon_kulkas_non_inverter
-    elif(jenis_alat=="ac non inverter"):
-        ac_carbon *= carbon_ac_non_inverter
+    kulkas_non_inverter_carbon = (kulkas_non_inverter_num / 24) * kulkas_non_inverter_consume_hour
+    ac_non_inverter_carbon = ac_non_inverter_num * ac_non_inverter_consume_hour
+    lampu_led_carbon = lampu_led_consume_hour * lampu_led_num
 
-    lamp_carbon = lamp_consume_hour * lamp_num
-    if (lamp_type=="pijar"):
-        lamp_carbon *= 0.02150
-    elif(lamp_type =="neon"):
-        lamp_carbon*=0.00540
-    else:
-        lamp_carbon*=0.00240
-
-    carbon = electric_carbon + lamp_carbon + ac_carbon + kulkas_carbon
+    carbon = (
+        (electric_carbon)
+        + (lampu_pijar_carbon * 0.215)
+        + (lampu_led_carbon * 0.215)
+        + (ac_inverter_carbon * 0.1)
+        + (ac_non_inverter_carbon * 0.1)
+        + (kulkas_inverter_carbon * 0.8)
+        + (kulkas_non_inverter_carbon * 0.8)
+    )
     carbon *= 1000
     rounded_carbon_percentage = round((carbon / 12), 2)
-    return rounded_carbon_percentage
+
+    return total_kwh, price, rounded_carbon_percentage
 
 @app.post('/rekomendasi')
-def rekomendasi(daya_listrik, jenis_alat, kulkas_num, kulkas_consume_hour, kulkas_power, ac_num, ac_consume_hour, ac_power, lamp_type, lamp_num, lamp_consume_hour, lamp_power):
-    rec_daya_listrik = daya_listrik
-    if lamp_type == "pijar":
+def rekomendasi(daya, jenis_perangkat, kulkas_num, kulkas_consume_hour, kulkas_power, ac_num, ac_consume_hour, ac_power, lamp_num, lamp_consume_hour, lamp_power):
+    rec_daya = daya
+    if jenis_perangkat == "lampu pijar":
         rec_lamp_type = "led"
-    else:
+    elif jenis_perangkat == "lampu led":
         rec_lamp_type = "led"
-
-    if jenis_alat == "kulkas inverter":
-        rec_jenis_alat = "kulkas inverter"
-    elif jenis_alat == "kulkas non inverter":
-        rec_jenis_alat = "kulkas inverter"
-    elif jenis_alat == "ac inverter":
-        rec_jenis_alat = "ac inverter"
+    elif jenis_perangkat == "kulkas inverter":
+        rec_jenis_perangkat = "kulkas inverter"
+    elif jenis_perangkat == "kulkas non inverter":
+        rec_jenis_perangkat = "kulkas inverter"
+    elif jenis_perangkat == "ac inverter":
+        rec_jenis_perangkat = "ac inverter"
     else:
-        rec_jenis_alat = "ac inverter"
+        rec_jenis_perangkat = "ac inverter"
 
     numeric = [kulkas_num, kulkas_consume_hour, kulkas_power, ac_num, ac_consume_hour, ac_power, lamp_num, lamp_consume_hour, lamp_power]
     rec_numeric = [round(num * 0.8) for num in numeric]
 
     output = "Berdasarkan pola penggunaan anda, saya sarankan untuk melakukan penghematan dengan mengurangi penggunaan alat elektronik menjadi:\n"
-    output += f"daya_listrik: {rec_daya_listrik} Watt\n"
-    output += f"jenis_alat: {rec_jenis_alat}\n"
+    output += f"daya: {rec_daya} Watt\n"
+    output += f"jenis_perangkat: {rec_jenis_perangkat}\n"
     output += f"lamp_type: {rec_lamp_type}\n"
 
     parameter_names = ["kulkas_num", "kulkas_consume_hour", "kulkas_power", "ac_num", "ac_consume_hour", "ac_power", "lamp_num", "lamp_consume_hour", "lamp_power"]
     for i, name in enumerate(parameter_names):
         output += f"{name}: {rec_numeric[i]}\n"
     return output
+
+
 
 if __name__ == '__main__':
     uvicorn.run(app, host='127.0.0.1', port=8000)
