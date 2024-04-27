@@ -15,6 +15,8 @@ app = FastAPI()
 model = load_model('human_detector.keras')
 class_names = ['animal', 'other', 'person']
 
+import json
+
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
     contents = await file.read()
@@ -25,10 +27,12 @@ async def predict(file: UploadFile = File(...)):
     x = x / 255.0
     predictions = model.predict(x)
     predicted_class = class_names[np.argmax(predictions)]
-    hasil=False
-    if(predicted_class=="person"):
-        hasil=True
-     result = {
+    hasil = False
+    if predicted_class == "person":
+        hasil = True
+    
+    # Buat objek JSON
+    result = {
         "result": hasil
     }
 
