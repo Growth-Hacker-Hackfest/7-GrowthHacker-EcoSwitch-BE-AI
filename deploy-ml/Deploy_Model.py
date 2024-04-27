@@ -10,7 +10,7 @@ import io
 
 app = FastAPI()
 
-model = load_model('./animall_person_other_v2_fine_tuned.h5')
+model = load_model('./human_detector.keras')
 class_names = ['animal', 'other', 'person']
 
 @app.post("/predict")
