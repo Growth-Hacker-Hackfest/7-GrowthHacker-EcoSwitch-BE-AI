@@ -15,8 +15,6 @@ app = FastAPI()
 model = load_model('human_detector.keras')
 class_names = ['animal', 'other', 'person']
 
-import json
-
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
     contents = await file.read()
@@ -27,16 +25,7 @@ async def predict(file: UploadFile = File(...)):
     x = x / 255.0
     predictions = model.predict(x)
     predicted_class = class_names[np.argmax(predictions)]
-    hasil = False
-    if predicted_class == "person":
-        hasil = True
-    
-    # Buat objek JSON
-    result = {
-        "result": hasil
-    }
-    
-    return result
+    return {"classification": predicted_class}
 
 
 class PredictionRequest(BaseModel):
@@ -44,14 +33,10 @@ class PredictionRequest(BaseModel):
     key: list[str]
 
 @app.post('/predict_combined')
-def predict_kwh(request: PredictionRequest):
+def predict_combined(request: PredictionRequest):
     daya = request.daya
-    key = []
-    for item in request.key:
-        if isinstance(item, int):
-            key.append(str(item))
-        else:
-            key.append(item)
+    key = request.key
+
     ac_inverter_arr = []
     ac_non_inverter_arr = []
     kulkas_inverter_arr = []
@@ -99,28 +84,28 @@ def predict_kwh(request: PredictionRequest):
     kipas_angin_num = kipas_angin_power = kipas_angin_consume_hour = 0
 
     for data in ac_inverter_data:
-        ac_inverter_num, ac_inverter_power, ac_inverter_consume_hour = data[1:4]
+        ac_inverter_num, ac_inverter_power, ac_inverter_consume_hour = int(data[1]), int(data[2]), int(data[3])
 
     for data in ac_non_inverter_data:
-        ac_non_inverter_num, ac_non_inverter_power, ac_non_inverter_consume_hour = data[1:4]
+        ac_non_inverter_num, ac_non_inverter_power, ac_non_inverter_consume_hour = int(data[1]), int(data[2]), int(data[3])
 
     for data in kulkas_inverter_data:
-        kulkas_inverter_num, kulkas_inverter_power, kulkas_inverter_consume_hour = data[1:4]
+        kulkas_inverter_num, kulkas_inverter_power, kulkas_inverter_consume_hour = int(data[1]), int(data[2]), int(data[3])
 
     for data in kulkas_non_inverter_data:
-        kulkas_non_inverter_num, kulkas_non_inverter_power, kulkas_non_inverter_consume_hour = data[1:4]
+        kulkas_non_inverter_num, kulkas_non_inverter_power, kulkas_non_inverter_consume_hour = int(data[1]), int(data[2]), int(data[3])
 
     for data in lampu_pijar_data:
-        lampu_pijar_num, lampu_pijar_power, lampu_pijar_consume_hour = data[1:4]
+        lampu_pijar_num, lampu_pijar_power, lampu_pijar_consume_hour = int(data[1]), int(data[2]), int(data[3])
 
     for data in lampu_led_data:
-        lampu_led_num, lampu_led_power, lampu_led_consume_hour = data[1:4]
+        lampu_led_num, lampu_led_power, lampu_led_consume_hour = int(data[1]), int(data[2]), int(data[3])
 
     for data in televisi_data:
-        televisi_num, televisi_power, televisi_consume_hour = data[1:4]
+        televisi_num, televisi_power, televisi_consume_hour = int(data[1]), int(data[2]), int(data[3])
 
     for data in kipas_angin_data:
-        kipas_angin_num, kipas_angin_power, kipas_angin_consume_hour = data[1:4]
+        kipas_angin_num, kipas_angin_power, kipas_angin_consume_hour = int(data[1]), int(data[2]), int(data[3])
 
     power = (kulkas_inverter_num * kulkas_inverter_consume_hour * kulkas_inverter_power) + (ac_inverter_num * ac_inverter_consume_hour * ac_inverter_power) + (lampu_pijar_num * lampu_pijar_consume_hour * lampu_pijar_power) +(lampu_led_num * lampu_led_consume_hour * lampu_led_power)+ (televisi_num * televisi_consume_hour * televisi_power) + (kipas_angin_num * kipas_angin_consume_hour * kipas_angin_power)
     total_kwh = (power * 30) / 1000
