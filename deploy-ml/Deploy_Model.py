@@ -78,24 +78,8 @@ def predict_co2(daya_listrik, jenis_alat, kulkas_num, kulkas_consume_hour, kulka
 
 @app.post('/rekomendasi')
 def rekomendasi(daya_listrik, jenis_alat, kulkas_num, kulkas_consume_hour, kulkas_power, ac_num, ac_consume_hour, ac_power, lamp_type, lamp_num, lamp_consume_hour, lamp_power):
-    if daya_listrik <= 450:
-        rec_daya_listrik = 450
-    elif daya_listrik <= 900:
-        rec_daya_listrik = 900
-    elif daya_listrik <= 1300:
-        rec_daya_listrik = 1300
-    elif daya_listrik <= 2200:
-        rec_daya_listrik = 2200
-    elif daya_listrik <= 3500:
-        rec_daya_listrik = 3500
-    elif daya_listrik <= 5500:
-        rec_daya_listrik = 5500
-    else:
-        rec_daya_listrik = 6600
-
+    rec_daya_listrik = daya_listrik
     if lamp_type == "pijar":
-        rec_lamp_type = "neon"
-    elif lamp_type == "neon":
         rec_lamp_type = "led"
     else:
         rec_lamp_type = "led"
