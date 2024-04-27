@@ -38,7 +38,12 @@ class PredictionRequest(BaseModel):
 @app.post('/predict_combined')
 def predict_kwh(request: PredictionRequest):
     daya = request.daya
-    key = request.key
+    key = []
+    for item in request.key:
+        if isinstance(item, int):
+            key.append(str(item))
+        else:
+            key.append(item)
     ac_inverter_arr = []
     ac_non_inverter_arr = []
     kulkas_inverter_arr = []
@@ -178,6 +183,8 @@ def rekomendasi(daya, jenis_perangkat, kulkas_num, kulkas_consume_hour, kulkas_p
     for i, name in enumerate(parameter_names):
         output += f"{name}: {rec_numeric[i]}\n"
     return output
+
+
 
 if __name__ == '__main__':
     uvicorn.run(app, host='127.0.0.1', port=8000)
