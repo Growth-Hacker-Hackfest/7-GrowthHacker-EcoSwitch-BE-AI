@@ -8,7 +8,7 @@ from tensorflow.keras.preprocessing import image
 from PIL import Image
 import io
 import itertools
-
+from pydantic import BaseModel
 
 app = FastAPI()
 
