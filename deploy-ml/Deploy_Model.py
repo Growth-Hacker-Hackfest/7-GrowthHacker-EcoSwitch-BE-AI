@@ -28,7 +28,14 @@ async def predict(file: UploadFile = File(...)):
     hasil=False
     if(predicted_class=="person"):
         hasil=True
-    return hasil
+     result = {
+        "result": hasil
+    }
+
+    # Ubah objek JSON menjadi string
+    result_json = json.dumps(result)
+    
+    return result_json
 
 
 class PredictionRequest(BaseModel):
