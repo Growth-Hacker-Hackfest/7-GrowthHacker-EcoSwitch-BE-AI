@@ -177,7 +177,141 @@ def rekomendasi(daya, jenis_perangkat, kulkas_num, kulkas_consume_hour, kulkas_p
         output += f"{name}: {rec_numeric[i]}\n"
     return output
 
+class RecommendationRequest(BaseModel):
+    key: list[str]
+@app.post('/rekomendasi_v2')
+def rekomendasi(request: RecommendationRequest):
+    key = request.key
 
+    ac_inverter_arr = []
+    ac_non_inverter_arr = []
+    kulkas_inverter_arr = []
+    kulkas_non_inverter_arr = []
+    lampu_pijar_arr = []
+    lampu_led_arr = []
+    televisi_arr = []
+    kipas_angin_arr = []
+
+    for i in key:
+        if isinstance(i, str):
+            if "ac inverter" in i:
+                ac_inverter_arr.append(i)
+            elif "ac non inverter" in i:
+                ac_non_inverter_arr.append(i)
+            elif "kulkas inverter" in i:
+                kulkas_inverter_arr.append(i)
+            elif "kulkas non inverter" in i:
+                kulkas_non_inverter_arr.append(i)
+            elif "lampu pijar" in i:
+                lampu_pijar_arr.append(i)
+            elif "lampu led" in i:
+                lampu_led_arr.append(i)
+            elif "televisi" in i:
+                televisi_arr.append(i)
+            elif "kipas angin" in i:
+                kipas_angin_arr.append(i)
+
+    ac_inverter_data = [list(group) for _, group in itertools.groupby(key, lambda x: x in ac_inverter_arr) if group]
+    ac_non_inverter_data = [list(group) for _, group in itertools.groupby(key, lambda x: x in ac_non_inverter_arr) if group]
+    kulkas_inverter_data = [list(group) for _, group in itertools.groupby(key, lambda x: x in kulkas_inverter_arr) if group]
+    kulkas_non_inverter_data = [list(group) for _, group in itertools.groupby(key, lambda x: x in kulkas_non_inverter_arr) if group]
+    lampu_pijar_data = [list(group) for _, group in itertools.groupby(key, lambda x: x in lampu_pijar_arr) if group]
+    lampu_led_data = [list(group) for _, group in itertools.groupby(key, lambda x: x in lampu_led_arr) if group]
+    televisi_data = [list(group) for _, group in itertools.groupby(key, lambda x: x in televisi_arr) if group]
+    kipas_angin_data = [list(group) for _, group in itertools.groupby(key, lambda x: x in kipas_angin_arr) if group]
+
+    ac_inverter_num = ac_inverter_power = ac_inverter_consume_hour = 0
+    ac_non_inverter_num = ac_non_inverter_power = ac_non_inverter_consume_hour = 0
+    kulkas_inverter_num = kulkas_inverter_power = kulkas_inverter_consume_hour = 0
+    kulkas_non_inverter_num = kulkas_non_inverter_power = kulkas_non_inverter_consume_hour = 0
+    lampu_pijar_num = lampu_pijar_power = lampu_pijar_consume_hour = 0
+    lampu_led_num = lampu_led_power = lampu_led_consume_hour = 0
+    televisi_num = televisi_power = televisi_consume_hour = 0
+    kipas_angin_num = kipas_angin_power = kipas_angin_consume_hour = 0
+
+    for data in ac_inverter_data:
+        ac_inverter_num, ac_inverter_power, ac_inverter_consume_hour = int(data[1]), int(data[2]), int(data[3])
+
+    for data in ac_non_inverter_data:
+        ac_non_inverter_num, ac_non_inverter_power, ac_non_inverter_consume_hour = int(data[1]), int(data[2]), int(data[3])
+
+    for data in kulkas_inverter_data:
+        kulkas_inverter_num, kulkas_inverter_power, kulkas_inverter_consume_hour = int(data[1]), int(data[2]), int(data[3])
+
+    for data in kulkas_non_inverter_data:
+        kulkas_non_inverter_num, kulkas_non_inverter_power, kulkas_non_inverter_consume_hour = int(data[1]), int(data[2]), int(data[3])
+
+    for data in lampu_pijar_data:
+        lampu_pijar_num, lampu_pijar_power, lampu_pijar_consume_hour = int(data[1]), int(data[2]), int(data[3])
+
+    for data in lampu_led_data:
+        lampu_led_num, lampu_led_power, lampu_led_consume_hour = int(data[1]), int(data[2]), int(data[3])
+
+    for data in televisi_data:
+        televisi_num, televisi_power, televisi_consume_hour = int(data[1]), int(data[2]), int(data[3])
+
+    for data in kipas_angin_data:
+        kipas_angin_num, kipas_angin_power, kipas_angin_consume_hour = int(data[1]), int(data[2]), int(data[3])
+    
+    import pandas as pd
+
+    data = {
+        'ac_inverter_num': [ac_inverter_num],
+        'ac_inverter_power': [ac_inverter_power],
+        'ac_inverter_consume_hour': [ac_inverter_consume_hour],
+        'ac_non_inverter_num': [ac_non_inverter_num],
+        'ac_non_inverter_power': [ac_non_inverter_power],
+        'ac_non_inverter_consume_hour': [ac_non_inverter_consume_hour],
+        'kulkas_inverter_num': [kulkas_inverter_num],
+        'kulkas_inverter_power': [kulkas_inverter_power],
+        'kulkas_inverter_consume_hour': [kulkas_inverter_consume_hour],
+        'kulkas_non_inverter_num': [kulkas_non_inverter_num],
+        'kulkas_non_inverter_power': [kulkas_non_inverter_power],
+        'kulkas_non_inverter_consume_hour': [kulkas_non_inverter_consume_hour],
+        'lampu_pijar_num': [lampu_pijar_num],
+        'lampu_pijar_power': [lampu_pijar_power],
+        'lampu_pijar_consume_hour': [lampu_pijar_consume_hour],
+        'lampu_led_num': [lampu_led_num],
+        'lampu_led_power': [lampu_led_power],
+        'lampu_led_consume_hour': [lampu_led_consume_hour],
+        'televisi_num': [televisi_num],
+        'televisi_power': [televisi_power],
+        'televisi_consume_hour': [televisi_consume_hour],
+        'kipas_angin_num': [kipas_angin_num],
+        'kipas_angin_power': [kipas_angin_power],
+        'kipas_angin_consume_hour': [kipas_angin_consume_hour]
+    }
+
+    df = pd.DataFrame(data)
+
+    if len(lampu_pijar_num) != 0:
+        rec_lamp = "led"
+    if len(kulkas_non_inverter_num) != 0:
+        rec_kulkas = "kulkas non inverter"
+    if len(ac_non_inverter_num) != 0:
+        rec_ac = "ac non inverter"
+    
+    kulkas = kulkas_inverter_num+kulkas_non_inverter_num
+    pow_inv_kulkas = kulkas_inverter_power
+    pow_non_inv_kulkas = kulkas_non_inverter_power
+    lampu = lampu_led_num+lampu_pijar_num
+    pow_led = lampu_led_power
+    pow_pijar = lampu_pijar_power
+    ac = ac_inverter_num+ac_non_inverter_num
+    pow_inv_ac = ac_inverter_power
+    pow_non_inv_ac = ac_non_inverter_power
+    numeric = [kulkas,lampu,ac,pow_inv_kulkas,pow_non_inv_kulkas,pow_led,pow_pijar,pow_inv_ac,pow_non_inv_ac]
+    rec_numeric = [round(num * 0.8) for num in numeric]
+
+    output = "Berdasarkan pola penggunaan anda, saya sarankan untuk melakukan penghematan dengan mengurangi penggunaan alat elektronik menjadi:\n"
+    output += "rekomendasi jenis lampu: "+rec_lamp 
+    output += "rekomendasi jenis lampu: "+rec_kulkas 
+    output += "rekomendasi jenis ac: "+rec_ac 
+
+    parameter_names = ["kulkas","lampu","ac","pow_inv_kulkas","pow_non_inv_kulkas","pow_led","pow_pijar","pow_inv_ac","pow_non_inv_ac"]
+    for i, name in enumerate(parameter_names):
+        output += f"{name}: {rec_numeric[i]}\n"
+    return output
 
 if __name__ == '__main__':
     uvicorn.run(app, host='127.0.0.1', port=8000)
